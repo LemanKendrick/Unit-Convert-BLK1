@@ -1,6 +1,6 @@
 // Unit Converter service worker — network-first, cache fallback.
 // Bump VERSION on every deploy so phones pick up the new files.
-const VERSION = 'unitconv-v1.1';
+const VERSION = 'unitconv-v1.2';
 const FILES = [
   './',
   './index.html',
