@@ -1,6 +1,7 @@
 {
   "name": "Unit Converter",
   "short_name": "Units",
+  "id": "unit-converter",
   "description": "Length, area, weight, volume and flow between imperial and metric.",
   "start_url": "./",
   "scope": "./",
