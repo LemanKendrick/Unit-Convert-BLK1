@@ -108,9 +108,22 @@ button:focus-visible{outline:2px solid var(--uc-accent);outline-offset:2px}
 .dots i{width:14px;height:14px;border-radius:50%;border:1px solid rgba(128,128,128,.55);margin-left:-4px}
 .dots i:first-child{margin-left:0}
 .dots i{forced-color-adjust:none}
-.swatches{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px 16px}
-.sw{display:flex;align-items:center;gap:10px;font-size:13.5px;cursor:pointer}
-.sw input[type=color]{width:40px;height:30px;padding:2px;border:1px solid var(--uc-line);border-radius:6px;background:var(--uc-field);cursor:pointer;flex:none}
+.swatches{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.sw{display:flex;align-items:center;gap:10px;font:inherit;font-size:13.5px;text-align:left;background:var(--uc-field);color:var(--uc-ink);border:1px solid var(--uc-line);border-radius:6px;padding:5px 8px;cursor:pointer}
+.sw[aria-pressed="true"]{border-color:var(--uc-accent);box-shadow:0 0 0 1px var(--uc-accent)}
+.sw .chipc{width:26px;height:26px;border:1px solid rgba(128,128,128,.55);border-radius:5px;flex:none;forced-color-adjust:none}
+.sw .hx{display:block;font-family:var(--f-mono);font-size:12px;color:var(--uc-muted)}
+.cedit{display:grid;grid-template-columns:auto 1fr;gap:12px 16px;align-items:center;border:1px solid var(--uc-line);border-radius:8px;padding:12px}
+.cedit .ce-title{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;font-family:var(--f-display);font-size:15px;letter-spacing:.08em;text-transform:uppercase;color:var(--uc-muted)}
+.cedit input[type=color]{width:72px;height:72px;padding:3px;border:1px solid var(--uc-line);border-radius:8px;background:var(--uc-field);cursor:pointer;grid-row:span 4}
+.ce-row{display:grid;grid-template-columns:1.5ch minmax(0,1fr) 8ch;gap:10px;align-items:center;font-family:var(--f-mono);font-size:14px}
+.ce-row input[type=range]{min-width:0;width:100%}
+.ce-row.r input[type=range]{accent-color:#d33}.ce-row.g input[type=range]{accent-color:#2a2}.ce-row.b input[type=range]{accent-color:#36d}
+.cedit input[type=number],.cedit input.hexin{font-family:var(--f-mono);font-size:14px;background:var(--uc-field);color:var(--uc-ink);border:1px solid var(--uc-line);border-radius:6px;padding:5px 6px;width:100%;min-width:0;text-align:right}
+.cedit input.hexin{text-transform:lowercase;text-align:left}
+.cedit input:focus{outline:none;border-color:var(--uc-accent);box-shadow:0 0 0 2px var(--uc-accent-soft)}
+.cedit input.bad{border-color:var(--uc-bad);color:var(--uc-bad)}
+@media (max-width:420px){.cedit{grid-template-columns:1fr}.cedit input[type=color]{grid-row:auto;width:100%;height:44px}}
 .appear-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .appear-actions input{flex:1 1 160px;min-width:0;font:inherit;font-size:14px;background:var(--uc-field);color:var(--uc-ink);border:1px solid var(--uc-line);border-radius:6px;padding:6px 8px}
 </style>
@@ -121,7 +134,7 @@ button:focus-visible{outline:2px solid var(--uc-accent);outline-offset:2px}
   <header>
     <h1>Unit Converter</h1>
     <div class="hdr-right">
-      <span class="build">v1.0</span>
+      <span class="build">v1.1</span>
       <button type="button" class="ghost" id="appearBtn" aria-expanded="false" aria-controls="appear">Appearance</button>
     </div>
   </header>
@@ -131,6 +144,14 @@ button:focus-visible{outline:2px solid var(--uc-accent);outline-offset:2px}
     <div class="presets" id="presets"></div>
     <h3>Colors</h3>
     <div class="swatches" id="swatches"></div>
+    <div class="cedit" id="cedit" hidden>
+      <div class="ce-title"><span id="ceName"></span><button type="button" class="ghost" id="ceDone">Done</button></div>
+      <input type="color" id="cePick" aria-label="Pick a color">
+      <div class="ce-row r"><span>R</span><input type="range" min="0" max="255" data-ch="0" aria-label="Red"><input type="number" min="0" max="255" inputmode="numeric" data-ch="0" aria-label="Red value"></div>
+      <div class="ce-row g"><span>G</span><input type="range" min="0" max="255" data-ch="1" aria-label="Green"><input type="number" min="0" max="255" inputmode="numeric" data-ch="1" aria-label="Green value"></div>
+      <div class="ce-row b"><span>B</span><input type="range" min="0" max="255" data-ch="2" aria-label="Blue"><input type="number" min="0" max="255" inputmode="numeric" data-ch="2" aria-label="Blue value"></div>
+      <div class="ce-row"><span>#</span><input class="hexin" id="ceHex" maxlength="7" spellcheck="false" autocomplete="off" autocapitalize="off" aria-label="Hex value" style="grid-column:span 2"></div>
+    </div>
     <div class="appear-actions">
       <input id="presetName" maxlength="24" placeholder="Name this color set" aria-label="Preset name">
       <button type="button" class="ghost" id="savePreset">Save preset</button>
@@ -612,7 +633,8 @@ function applyTheme() {
   }
   requestAnimationFrame(themeDiag);
   const cur = currentColors();
-  TOKENS.forEach(([k]) => { $('#c-' + k).value = cur[k]; });
+  TOKENS.forEach(([k]) => { $('#p-' + k).style.background = cur[k]; $('#h-' + k).textContent = cur[k]; });
+  syncEditor(cur);
   renderPresets();
   $('#delPreset').hidden = !theme.sel.startsWith('u:');
   let meta = $('meta[name="theme-color"]');
@@ -645,15 +667,68 @@ function renderPresets() {
   Object.entries(theme.user).forEach(([n, c]) => box.appendChild(chip('u:' + n, n, dots(c))));
   if (theme.custom) box.appendChild(chip('custom', 'Custom (unsaved)', dots(theme.custom)));
 }
+// ---- color editor (pick, R/G/B sliders and boxes, hex) ----
+let editTok = null;
+const hexToRgb = h => { const n = parseInt(h.slice(1), 16); return [n >> 16, (n >> 8) & 255, n & 255]; };
+const rgbToHex = c => '#' + c.map(v => v.toString(16).padStart(2, '0')).join('');
+// Accepts rrggbb, #rrggbb; rgb / #rgb only when short is allowed (on Enter/leaving the box)
+function parseHex(v, short) {
+  const h = v.trim().replace(/^#/, '').toLowerCase();
+  if (/^[0-9a-f]{6}$/.test(h)) return '#' + h;
+  if (short && /^[0-9a-f]{3}$/.test(h)) return '#' + h.replace(/./g, c => c + c);
+  return null;
+}
+function setTok(k, hex) {
+  const cur = currentColors(); if (cur[k] === hex) { syncEditor(cur); return; }
+  cur[k] = hex; theme.custom = cur; theme.sel = 'custom';
+  applyTheme(); saveTheme();
+}
+// Fills the editor from the current colors; the box being typed in is left alone unless force is set
+function syncEditor(cur, force) {
+  document.querySelectorAll('#swatches .sw').forEach(b => b.setAttribute('aria-pressed', b.dataset.tok === editTok));
+  const ed = $('#cedit'); if (!ed) return;
+  ed.hidden = !editTok; if (!editTok) return;
+  const hex = cur[editTok], rgb = hexToRgb(hex), act = force ? null : document.activeElement;
+  $('#ceName').textContent = TOKENS.find(([k]) => k === editTok)[1];
+  if ($('#cePick') !== act) $('#cePick').value = hex;
+  if ($('#ceHex') !== act) $('#ceHex').value = hex;
+  ed.querySelectorAll('[data-ch]').forEach(i => { if (i !== act) i.value = rgb[+i.dataset.ch]; });
+}
 function initTheme() {
   $('#swatches').innerHTML = TOKENS.map(([k, l]) =>
-    `<label class="sw" for="c-${k}"><input type="color" id="c-${k}" data-tok="${k}">${l}</label>`).join('');
-  $('#swatches').addEventListener('input', e => {
-    const k = e.target.dataset.tok; if (!k) return;
-    const cur = currentColors(); cur[k] = e.target.value;
-    theme.custom = cur; theme.sel = 'custom';
-    applyTheme(); saveTheme();
+    `<button type="button" class="sw" data-tok="${k}" aria-pressed="false" aria-controls="cedit"><span class="chipc" id="p-${k}"></span>` +
+    `<span>${l}<span class="hx" id="h-${k}"></span></span></button>`).join('');
+  $('#swatches').addEventListener('click', e => {
+    const b = e.target.closest('.sw'); if (!b) return;
+    editTok = editTok === b.dataset.tok ? null : b.dataset.tok;
+    syncEditor(currentColors());
   });
+  $('#ceDone').addEventListener('click', () => { editTok = null; syncEditor(currentColors()); });
+  const ed = $('#cedit');
+  ed.addEventListener('input', e => {
+    if (!editTok) return;
+    const t = e.target;
+    if (t.id === 'cePick') return setTok(editTok, t.value);
+    if (t.id === 'ceHex') {
+      const hex = parseHex(t.value, false);
+      t.classList.toggle('bad', !hex && /[^#0-9a-f]/i.test(t.value));
+      if (hex) setTok(editTok, hex);
+      return;
+    }
+    if (t.dataset.ch != null) {
+      if (t.value === '') return;                  // let the box be cleared while typing
+      const rgb = hexToRgb(currentColors()[editTok]);
+      rgb[+t.dataset.ch] = Math.max(0, Math.min(255, Math.round(+t.value) || 0));
+      setTok(editTok, rgbToHex(rgb));
+    }
+  });
+  ed.addEventListener('change', e => {            // Enter / leaving a box: tidy or revert
+    if (!editTok) return;
+    const t = e.target;
+    if (t.id === 'ceHex') { const hex = parseHex(t.value, true); if (hex) setTok(editTok, hex); else toast('Enter a hex color like #1d5c9e'); }
+    t.classList.remove('bad'); syncEditor(currentColors(), true);
+  });
+  ed.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.tagName === 'INPUT') e.target.blur(); });
   $('#presets').addEventListener('click', e => {
     const b = e.target.closest('.chip'); if (!b) return;
     theme.sel = b.dataset.sel; applyTheme(); saveTheme();
